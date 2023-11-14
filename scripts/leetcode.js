@@ -405,6 +405,29 @@ function convertToSlug(string) {
     .replace(/^-+/, '') // Trim - from start of text
     .replace(/-+$/, ''); // Trim - from end of text
 }
+
+function getProblemName() {
+  const questionElem = document.getElementsByClassName(
+    'content__u3I1 question-content__JfgR',
+  );
+  const questionDescriptionElem = document.getElementsByClassName(
+    'question-description__3U1T',
+  );
+  let questionTitle = 'unknown-problem';
+  if (checkElem(questionElem)) {
+    let qtitle = document.getElementsByClassName('css-v3d350');
+    if (checkElem(qtitle)) {
+      questionTitle = qtitle[0].innerHTML;
+    }
+  } else if (checkElem(questionDescriptionElem)) {
+    let qtitle = document.getElementsByClassName('question-title');
+    if (checkElem(qtitle)) {
+      questionTitle = qtitle[0].innerText;
+    }
+  }
+  return questionTitle;
+}
+
 function getProblemNameSlug() {
   const questionElem = document.getElementsByClassName(
     'content__u3I1 question-content__JfgR',
@@ -424,6 +447,7 @@ function getProblemNameSlug() {
       questionTitle = qtitle[0].innerText;
     }
   }
+  console.log("Probably question code", convertToSlug(questionTitle));
   return addLeadingZeros(convertToSlug(questionTitle));
 }
 
@@ -434,6 +458,21 @@ function addLeadingZeros(title) {
     return '0'.repeat(4 - len) + title;
   }
   return title;
+}
+
+function getDifficulty() {
+  const isHard = document.getElementsByClassName('css-t42afm');
+  const isMedium = document.getElementsByClassName('css-dcmtd5');
+  const isEasy = document.getElementsByClassName('css-14oi08n');
+
+  if (checkElem(isEasy)) {
+    return 'Easy';
+  } else if (checkElem(isMedium)) {
+    return 'Medium';
+  } else if (checkElem(isHard)) {
+    return 'Hard';
+  }
+  return 'unknown';
 }
 
 /* Parser function for the question and tags */
@@ -494,6 +533,19 @@ function parseQuestion() {
   }
 
   return null;
+}
+
+function getStats() {
+  const probStats = document.getElementsByClassName('data__HC-i');
+  if (!checkElem(probStats)) {
+    return null;
+  }
+  const time = probStats[0].textContent;
+  const timePercentile = probStats[1].textContent;
+  const space = probStats[2].textContent;
+  const spacePercentile = probStats[3].textContent;
+  // Format commit message
+  return {time, timePercentile, space, spacePercentile};
 }
 
 /* Parser function for time/space stats */
@@ -615,6 +667,7 @@ const loader = setInterval(() => {
   if (success) {
     probStatement = parseQuestion();
     probStats = parseStats();
+    console.log({ probStatement, probStats });
   }
 
   if (probStatement !== null) {
@@ -631,6 +684,29 @@ const loader = setInterval(() => {
     }
 
     const problemName = getProblemNameSlug();
+    //========================================
+    const problemCode = problemName.substring(0, 4).replace(/[0]/g, '');
+    const problemTitle = getProblemName().substring(getProblemName().indexOf('.') + 2);
+    const problemSite = 'leetcode';
+    const problemUrl = window.location.href;
+    const problemStats = getStats();
+    problemStats.memory = problemStats.space;
+    problemStats.memoryScore = problemStats.spacePercentile;
+    problemStats.timeScore = problemStats.timePercentile;
+    const problemDate = new Date().toISOString();
+    const problemNotes = "";
+    const problemDifficulty = getDifficulty();
+
+    const res = {problem: { code: problemCode, title: problemTitle, site: problemSite, url: problemUrl, stats: problemStats, date: problemDate, notes: problemNotes, difficulty: problemDifficulty, revised: false } };
+
+    fetch('https://project52.vercel.app/api', {
+      method: 'POST',
+      body: JSON.stringify(res),
+      headers: {
+        Authorization: `Bearer 9FImIJvxkbm1VnFH4JCYKTjn78dfe2mYOb45e3HKcyM=`
+      }
+    }).then((res) => res.status ? console.log("Logged to PR52") : console.log("Failed to log to PR52"));
+    //========================================
     const language = findLanguage();
     if (language !== null) {
       // start upload indicator here
