@@ -67,7 +67,7 @@ const upload = (
   cb = undefined,
 ) => {
   // To validate user, load user object from GitHub.
-  const URL = `https://api.github.com/repos/${hook}/contents/${directory}/${filename}`;
+  const URL = `https://api.github.com/repos/${hook}/contents/leetcode/${directory}/${filename}`;
 
   /* Define Payload */
   let data = {
@@ -703,7 +703,7 @@ const loader = setInterval(() => {
       method: 'POST',
       body: JSON.stringify(res),
       headers: {
-        Authorization: `Bearer 9FImIJvxkbm1VnFH4JCYKTjn78dfe2mYOb45e3HKcyM=`
+        Authorization: `Bearer ${leetpub_token}`
       }
     }).then((res) => res.status ? console.log("Logged to PR52") : console.log("Failed to log to PR52"));
     //========================================
